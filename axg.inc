@@ -36,6 +36,27 @@ ${TMP}/bl2_acs.bin: bl2.bin acs.bin
 ${TMP}/bl2_new.bin: ${TMP}/bl2_acs.bin bl21.bin
 	./blx_fix.sh ${TMP}/bl2_acs.bin ${TMP}/zero_tmp ${TMP}/bl2_zero.bin bl21.bin ${TMP}/bl21_zero.bin ${TMP}/bl2_new.bin bl2
 
+ifneq ($(GXLIMG_PATH),)
+${TMP}/bl30_new.bin.enc: ${TMP}/bl30_new.bin
+	${GXLIMG_PATH} -t bl30 -s ${TMP}/bl30_new.bin ${TMP}/bl30_new.bin.enc
+
+${TMP}/bl31.img.enc: bl31.img
+	${GXLIMG_PATH} -t bl3x -s bl31.img ${TMP}/bl31.img.enc
+
+${TMP}/bl33.bin.enc: ${BL33}
+	${GXLIMG_PATH} -t bl3x -s ${BL33} ${TMP}/bl33.bin.enc
+
+${TMP}/bl2.n.bin.sig: ${TMP}/bl2_new.bin
+	${GXLIMG_PATH} -t bl2 -s ${TMP}/bl2_new.bin ${TMP}/bl2.n.bin.sig
+
+${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.enc ${TMP}/bl33.bin.enc
+	${GXLIMG_PATH} -t fip --rev v3 \
+		       --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
+		       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
+		       ${O}/u-boot.bin;\
+	dd if=${O}/u-boot.bin of=${O}/u-boot.bin.usb.tpl skip=49152 bs=1
+	dd if=${O}/u-boot.bin of=${O}/u-boot.bin.usb.bl2 bs=49152 count=1
+else
 ${TMP}/bl30_new.bin.enc: ${TMP}/bl30_new.bin
 	./${AML_ENCRYPT} --bl3sig --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.enc  --level 3 --type bl30
 
@@ -53,3 +74,4 @@ ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.en
 	               --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
 		       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
 		       --level 3
+endif
