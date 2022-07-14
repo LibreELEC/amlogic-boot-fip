@@ -36,6 +36,38 @@ ${TMP}/bl2_new.bin: bl2.bin acs.bin
 	@if [ -e ${TMP}/zero_tmp ] ; then rm ${TMP}/zero_tmp ; fi
 	@rm ${TMP}/bl2_zero.bin ${TMP}/bl21_zero.bin
 
+ifneq ($(GXLIMG_PATH),)
+${TMP}/bl30_new.bin.enc: ${TMP}/bl30_new.bin
+	${GXLIMG_PATH} -t bl30 -s ${TMP}/bl30_new.bin ${TMP}/bl30_new.bin.enc
+
+${TMP}/bl31.img.enc: bl31.img
+	${GXLIMG_PATH} -t bl3x -s bl31.img ${TMP}/bl31.img.enc
+
+${TMP}/bl33.bin.enc: ${BL33}
+	${GXLIMG_PATH} -t bl3x -s ${BL33} ${TMP}/bl33.bin.enc
+
+${TMP}/bl2.n.bin.sig: ${TMP}/bl2_new.bin
+	${GXLIMG_PATH} -t bl2 -s ${TMP}/bl2_new.bin ${TMP}/bl2.n.bin.sig
+
+${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.enc ${TMP}/bl33.bin.enc
+	if [ -e lpddr3_1d.fw ] ; then \
+		${GXLIMG_PATH} -t fip --rev v3 \
+			       --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
+			       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
+			       --ddrfw ddr4_1d.fw --ddrfw ddr4_2d.fw --ddrfw ddr3_1d.fw \
+			       --ddrfw piei.fw --ddrfw lpddr4_1d.fw --ddrfw lpddr4_2d.fw \
+			       --ddrfw diag_lpddr4.fw --ddrfw aml_ddr.fw --ddrfw lpddr3_1d.fw \
+			       ${O}/u-boot.bin;\
+	else \
+		${GXLIMG_PATH} -t fip --rev v3 \
+			       --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
+			       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
+			       --ddrfw ddr4_1d.fw --ddrfw ddr4_2d.fw --ddrfw ddr3_1d.fw \
+			       --ddrfw piei.fw --ddrfw lpddr4_1d.fw --ddrfw lpddr4_2d.fw \
+			       --ddrfw diag_lpddr4.fw --ddrfw aml_ddr.fw \
+			       ${O}/u-boot.bin;\
+	fi
+else
 ${TMP}/bl30_new.bin.g12a.enc: ${TMP}/bl30_new.bin
 	./${AML_ENCRYPT} --bl30sig --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.g12a.enc --level v3
 
@@ -67,4 +99,4 @@ ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.en
 			       --ddrfw4 piei.fw --ddrfw5 lpddr4_1d.fw --ddrfw6 lpddr4_2d.fw \
 			       --ddrfw7 diag_lpddr4.fw --ddrfw8 aml_ddr.fw ;\
 	fi
-
+endif
