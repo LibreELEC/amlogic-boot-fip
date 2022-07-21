@@ -29,6 +29,7 @@ ${TMP}/fip.bin: ${TMP}/bl30_new.bin bl31.img ${BL33}
 	./fip_create --bl30 ${TMP}/bl30_new.bin --bl31 bl31.img --bl33 ${BL33} ${TMP}/fip.bin
 
 ${TMP}/bl2_acs.bin: bl2.bin acs.bin
+	sed -i 's/\x73\x02\x08\x91/\x1F\x20\x03\xD5/' bl2.bin
 	python3 acs_tool.py bl2.bin ${TMP}/bl2_acs.bin acs.bin 0
 
 ${TMP}/bl2_new.bin: ${TMP}/bl2_acs.bin bl21.bin
@@ -38,4 +39,11 @@ ${TMP}/boot_new.bin: ${TMP}/fip.bin ${TMP}/bl2_new.bin
 	cat ${TMP}/bl2_new.bin ${TMP}/fip.bin > ${TMP}/boot_new.bin
 
 ${O}/u-boot.bin: ${TMP}/boot_new.bin
-	./aml_encrypt_gxb --bootsig --input ${TMP}/boot_new.bin --output ${O}/u-boot.bin
+	./aml_encrypt_gxb --bootsig --input ${TMP}/boot_new.bin --output ${TMP}/u-boot.bin
+	dd if=$(TMP)/u-boot.bin of=$(TMP)/u-boot.bin.gxbb bs=512 conv=fsync
+	dd if=$(TMP)/u-boot.bin of=$(TMP)/u-boot.bin.gxbb bs=512 seek=9 skip=8 count=87 conv=fsync,notrunc
+	dd if=/dev/zero of=$(TMP)/u-boot.bin.gxbb bs=512 seek=8 count=1 conv=fsync,notrunc
+	dd if=bl1.bin.hardkernel of=$(TMP)/u-boot.bin.gxbb bs=512 seek=2 skip=2 count=1 conv=fsync,notrunc
+	./aml_chksum $(TMP)/u-boot.bin.gxbb
+	cp -R ${TMP}/u-boot.bin.gxbb ${O}/u-boot.bin
+	cp -R ${TMP}/u-boot.bin.gxbb ${O}/u-boot.bin.sd.bin
