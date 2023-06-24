@@ -10,6 +10,11 @@ else
 	BL33_ARGS :=--compress lz4
 endif
 
+UNAME_M := $(shell uname -m)
+ifneq ($(UNAME_M),x86_64)
+	QEMU =  qemu-x86_64
+endif
+
 AML_ENCRYPT ?= aml_encrypt_axg
 
 .PHONY: clean distclean
@@ -58,19 +63,19 @@ ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.en
 	dd if=${O}/u-boot.bin of=${O}/u-boot.bin.usb.bl2 bs=49152 count=1
 else
 ${TMP}/bl30_new.bin.enc: ${TMP}/bl30_new.bin
-	./${AML_ENCRYPT} --bl3sig --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.enc  --level 3 --type bl30
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.enc  --level 3 --type bl30
 
 ${TMP}/bl31.img.enc: bl31.img
-	./${AML_ENCRYPT} --bl3sig --input bl31.img --output ${TMP}/bl31.img.enc --level 3 --type bl31
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input bl31.img --output ${TMP}/bl31.img.enc --level 3 --type bl31
 
 ${TMP}/bl33.bin.enc: ${BL33}
-	./${AML_ENCRYPT} --bl3sig --input ${BL33} --output ${TMP}/bl33.bin.enc --level 3 --type bl33 ${BL33_ARGS}
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input ${BL33} --output ${TMP}/bl33.bin.enc --level 3 --type bl33 ${BL33_ARGS}
 
 ${TMP}/bl2.n.bin.sig: ${TMP}/bl2_new.bin
-	./${AML_ENCRYPT} --bl2sig --input ${TMP}/bl2_new.bin --output ${TMP}/bl2.n.bin.sig
+	${QEMU} ./${AML_ENCRYPT} --bl2sig --input ${TMP}/bl2_new.bin --output ${TMP}/bl2.n.bin.sig
 
 ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.enc ${TMP}/bl33.bin.enc
-	./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
+	${QEMU} ./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
 	               --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
 		       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
 		       --level 3
