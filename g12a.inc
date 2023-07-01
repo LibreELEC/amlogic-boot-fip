@@ -9,6 +9,11 @@ else
 	BL33_ARGS :=--compress lz4
 endif
 
+UNAME_M := $(shell uname -m)
+ifneq ($(UNAME_M),x86_64)
+	QEMU =  qemu-x86_64
+endif
+
 AML_ENCRYPT ?= aml_encrypt_g12a
 
 .PHONY: clean distclean
@@ -69,30 +74,30 @@ ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.en
 	fi
 else
 ${TMP}/bl30_new.bin.g12a.enc: ${TMP}/bl30_new.bin
-	./${AML_ENCRYPT} --bl30sig --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.g12a.enc --level v3
+	${QEMU} ./${AML_ENCRYPT} --bl30sig --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.g12a.enc --level v3
 
 ${TMP}/bl30_new.bin.enc: ${TMP}/bl30_new.bin.g12a.enc
-	./${AML_ENCRYPT} --bl3sig --input ${TMP}/bl30_new.bin.g12a.enc --output ${TMP}/bl30_new.bin.enc --level v3 --type bl30
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input ${TMP}/bl30_new.bin.g12a.enc --output ${TMP}/bl30_new.bin.enc --level v3 --type bl30
 
 ${TMP}/bl31.img.enc: bl31.img
-	./${AML_ENCRYPT} --bl3sig --input bl31.img --output ${TMP}/bl31.img.enc --level v3 --type bl31
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input bl31.img --output ${TMP}/bl31.img.enc --level v3 --type bl31
 
 ${TMP}/bl33.bin.enc: ${BL33}
-	./${AML_ENCRYPT} --bl3sig --input ${BL33} --output ${TMP}/bl33.bin.enc --level v3 --type bl33 ${BL33_ARGS}
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input ${BL33} --output ${TMP}/bl33.bin.enc --level v3 --type bl33 ${BL33_ARGS}
 
 ${TMP}/bl2.n.bin.sig: ${TMP}/bl2_new.bin
-	./${AML_ENCRYPT} --bl2sig --input ${TMP}/bl2_new.bin --output ${TMP}/bl2.n.bin.sig
+	${QEMU} ./${AML_ENCRYPT} --bl2sig --input ${TMP}/bl2_new.bin --output ${TMP}/bl2.n.bin.sig
 
 ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.enc ${TMP}/bl33.bin.enc
 	if [ -e lpddr3_1d.fw ] ; then \
-		./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
+		${QEMU} ./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
 			       --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
 			       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
 			       --ddrfw1 ddr4_1d.fw --ddrfw2 ddr4_2d.fw --ddrfw3 ddr3_1d.fw \
 			       --ddrfw4 piei.fw --ddrfw5 lpddr4_1d.fw --ddrfw6 lpddr4_2d.fw \
 			       --ddrfw7 diag_lpddr4.fw --ddrfw8 aml_ddr.fw --ddrfw9 lpddr3_1d.fw ;\
 	else \
-		./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
+		${QEMU} ./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
 			       --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
 			       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
 			       --ddrfw1 ddr4_1d.fw --ddrfw2 ddr4_2d.fw --ddrfw3 ddr3_1d.fw \

@@ -9,6 +9,11 @@ else
 	BL33_ARGS :=--compress lz4
 endif
 
+UNAME_M := $(shell uname -m)
+ifneq ($(UNAME_M),x86_64)
+	QEMU =  qemu-x86_64
+endif
+
 .PHONY: clean distclean
 .NOTPARALLEL: ${TMP}/bl30_new.bin ${TMP}/bl2_acs.bin ${TMP}/bl2_new.bin ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.enc ${TMP}/bl33.bin.enc ${TMP}/bl2.n.bin.sig ${O}/u-boot.bin
 
@@ -59,19 +64,19 @@ ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.en
 	dd if=${O}/u-boot.bin of=${O}/u-boot.bin.usb.bl2 bs=49152 count=1
 else
 ${TMP}/bl30_new.bin.enc: ${TMP}/bl30_new.bin
-	./aml_encrypt_gxl --bl3enc --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.enc
+	${QEMU} ./aml_encrypt_gxl --bl3enc --input ${TMP}/bl30_new.bin --output ${TMP}/bl30_new.bin.enc
 
 ${TMP}/bl31.img.enc: bl31.img
-	./aml_encrypt_gxl --bl3enc --input bl31.img --output ${TMP}/bl31.img.enc
+	${QEMU} ./aml_encrypt_gxl --bl3enc --input bl31.img --output ${TMP}/bl31.img.enc
 
 ${TMP}/bl33.bin.enc: ${BL33}
-	./aml_encrypt_gxl --bl3enc --input ${BL33} --output ${TMP}/bl33.bin.enc ${BL33_ARGS}
+	${QEMU} ./aml_encrypt_gxl --bl3enc --input ${BL33} --output ${TMP}/bl33.bin.enc ${BL33_ARGS}
 
 ${TMP}/bl2.n.bin.sig: ${TMP}/bl2_new.bin
-	./aml_encrypt_gxl --bl2sig --input ${TMP}/bl2_new.bin --output ${TMP}/bl2.n.bin.sig
+	${QEMU} ./aml_encrypt_gxl --bl2sig --input ${TMP}/bl2_new.bin --output ${TMP}/bl2.n.bin.sig
 
 ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.enc ${TMP}/bl33.bin.enc
-	./aml_encrypt_gxl --bootmk --output ${O}/u-boot.bin \
+	${QEMU} ./aml_encrypt_gxl --bootmk --output ${O}/u-boot.bin \
 	               --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
 		       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc
 endif
