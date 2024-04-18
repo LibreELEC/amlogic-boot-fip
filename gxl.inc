@@ -79,4 +79,12 @@ ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.en
 	${QEMU} ./aml_encrypt_gxl --bootmk --output ${O}/u-boot.bin \
 	               --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
 		       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc
+ifneq ($(AML_USER_SIG),)
+	${QEMU} ./${AML_ENCRYPT} --bootsig \
+		       --input ${O}/u-boot.bin \
+		       --amluserkey ${AML_USER_SIG} \
+		       --aeskey enable \
+		       --output ${O}/u-boot.bin.encrypt \
+		       --level 3
+endif
 endif
