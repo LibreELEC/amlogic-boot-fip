@@ -1,10 +1,11 @@
 O ?= .
 TMP ?= .
 BL33 ?=
+QEMU_LD_PREFIX ?= /usr/x86_64-linux-gnu/
 
 UNAME_M := $(shell uname -m)
 ifneq ($(UNAME_M),x86_64)
-	QEMU =  qemu-x86_64
+	QEMU =  qemu-x86_64 -L $(QEMU_LD_PREFIX)
 endif
 
 .phony: clean distclean

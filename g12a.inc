@@ -2,6 +2,7 @@ O ?= .
 TMP ?= .
 BL33 ?=
 COMPRESS_LZ4 ?= 0
+QEMU_LD_PREFIX ?= /usr/x86_64-linux-gnu/
 
 ifeq ($(COMPRESS_LZ4),0)
 	BL33_ARGS :=
@@ -11,7 +12,7 @@ endif
 
 UNAME_M := $(shell uname -m)
 ifneq ($(UNAME_M),x86_64)
-	QEMU =  qemu-x86_64
+	QEMU =  qemu-x86_64 -L $(QEMU_LD_PREFIX)
 endif
 
 AML_ENCRYPT ?= aml_encrypt_g12a
