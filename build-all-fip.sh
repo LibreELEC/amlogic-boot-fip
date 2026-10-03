@@ -20,7 +20,7 @@ for board in $BOARDS; do
 	if [ $ERR -gt 0 ] ; then
 		printf "[%20s]	Build			[\033[0;31mFAIL\033[0m]\n" $board
 	else
-		if [ -e $TMP/u-boot.bin -a -e $TMP/u-boot.bin.sd.bin -a -e $TMP/u-boot.bin.usb.bl2 -a -e $TMP/u-boot.bin.usb.tpl ] ; then
+		if [ -e $TMP/u-boot.bin -a -e $TMP/u-boot.bin.sd.bin ] && [ -e $TMP/u-boot.bin.usb -o -e $TMP/u-boot.bin.usb.bl2 -a -e $TMP/u-boot.bin.usb.tpl ] ; then
 			printf "[%20s]	Build			[\033[0;32mOK\033[0m]\n" $board
 		else
 			printf "[%20s]	Build			[\033[0;31mMISSING OUTPUT\033[0m]\n" $board
