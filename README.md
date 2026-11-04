@@ -47,7 +47,7 @@ u-boot.bin  u-boot.bin.sd.bin  u-boot.bin.usb.bl2  u-boot.bin.usb.tpl
 System Requirements:
  - x86-64 Linux system
  - Python 3 (for GXBB, GXL & GXM boards only)
- - openssl, stat and xxd (for S4 and T7 boards only)
+ - openssl, stat and xxd (for S4, S7D and T7 boards only)
  - sh
  - make
  - readlink
