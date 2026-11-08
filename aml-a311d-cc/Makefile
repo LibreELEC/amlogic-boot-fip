@@ -2,11 +2,17 @@ O ?= .
 TMP ?= .
 BL33 ?=
 COMPRESS_LZ4 ?= 0
+QEMU_LD_PREFIX ?= /usr/x86_64-linux-gnu/
 
 ifeq ($(COMPRESS_LZ4),0)
 	BL33_ARGS :=
 else
 	BL33_ARGS :=--compress lz4
+endif
+
+UNAME_M := $(shell uname -m)
+ifneq ($(UNAME_M),x86_64)
+	QEMU = qemu-x86_64 -L $(QEMU_LD_PREFIX)
 endif
 
 AML_ENCRYPT = aml_encrypt_g12b
@@ -47,22 +53,22 @@ ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.en
 		       ${O}/u-boot.bin;
 else
 ${TMP}/bl30_new.bin.g12a.enc: bl30_new.bin
-	./${AML_ENCRYPT} --bl30sig --input bl30_new.bin --output ${TMP}/bl30_new.bin.g12a.enc --level v3
+	${QEMU} ./${AML_ENCRYPT} --bl30sig --input bl30_new.bin --output ${TMP}/bl30_new.bin.g12a.enc --level v3
 
 ${TMP}/bl30_new.bin.enc: ${TMP}/bl30_new.bin.g12a.enc
-	./${AML_ENCRYPT} --bl3sig --input ${TMP}/bl30_new.bin.g12a.enc --output ${TMP}/bl30_new.bin.enc --level v3 --type bl30
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input ${TMP}/bl30_new.bin.g12a.enc --output ${TMP}/bl30_new.bin.enc --level v3 --type bl30
 
 ${TMP}/bl31.img.enc: bl31.img
-	./${AML_ENCRYPT} --bl3sig --input bl31.img --output ${TMP}/bl31.img.enc --level v3 --type bl31
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input bl31.img --output ${TMP}/bl31.img.enc --level v3 --type bl31
 
 ${TMP}/bl33.bin.enc: ${BL33}
-	./${AML_ENCRYPT} --bl3sig --input ${BL33} --output ${TMP}/bl33.bin.enc --level v3 --type bl33 ${BL33_ARGS}
+	${QEMU} ./${AML_ENCRYPT} --bl3sig --input ${BL33} --output ${TMP}/bl33.bin.enc --level v3 --type bl33 ${BL33_ARGS}
 
 ${TMP}/bl2.n.bin.sig: bl2_new.bin
-	./${AML_ENCRYPT} --bl2sig --input bl2_new.bin --output ${TMP}/bl2.n.bin.sig
+	${QEMU} ./${AML_ENCRYPT} --bl2sig --input bl2_new.bin --output ${TMP}/bl2.n.bin.sig
 
 ${O}/u-boot.bin: ${TMP}/bl2.n.bin.sig ${TMP}/bl30_new.bin.enc ${TMP}/bl31.img.enc ${TMP}/bl33.bin.enc
-	./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
+	${QEMU} ./${AML_ENCRYPT} --bootmk --output ${O}/u-boot.bin --level v3 \
 		       --bl2 ${TMP}/bl2.n.bin.sig --bl30 ${TMP}/bl30_new.bin.enc \
 		       --bl31 ${TMP}/bl31.img.enc --bl33 ${TMP}/bl33.bin.enc \
 		       --ddrfw1 piei.fw --ddrfw2 lpddr4_1d.fw --ddrfw3 lpddr4_2d.fw \
