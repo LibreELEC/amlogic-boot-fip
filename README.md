@@ -44,6 +44,30 @@ $ ls my-output-dir
 u-boot.bin  u-boot.bin.sd.bin  u-boot.bin.usb.bl2  u-boot.bin.usb.tpl
 ```
 
+Docker
+
+```
+docker build -t amlogic-boot-fip:latest .
+
+## build single board
+docker run \
+    --rm \
+    -v ${UBOOT_PATH}:/root/u-boot \
+    -v ${AMLOGIC_BOOT_FIP_OUTPUT}:/root/amlogic-boot-fip/build \
+    --name amlogic-boot-fip \
+    amlogic-boot-fip:latest \
+    /root/amlogic-boot-fip/build-fip.sh p212 /root/u-boot/u-boot.bin /root/amlogic-boot-fip/build
+
+## test all builds
+docker run \
+    --rm \
+    -v ${UBOOT_PATH}:/root/u-boot \
+    -v ${AMLOGIC_BOOT_FIP_OUTPUT}:/root/amlogic-boot-fip/build \
+    --name amlogic-boot-fip \
+    amlogic-boot-fip:latest \
+    /root/amlogic-boot-fip/build-all-fip.sh /root/u-boot/u-boot.bin
+```
+
 System Requirements:
  - x86-64 Linux system
  - Python 3 (for GXBB, GXL & GXM boards only)
